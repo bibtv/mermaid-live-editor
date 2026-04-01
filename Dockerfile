@@ -44,6 +44,6 @@ EXPOSE 8080
 COPY --from=mermaid-live-editor-builder /app/node_modules /app/node_modules
 COPY --from=mermaid-live-editor-builder /app/build /app/build
 
-RUN pnpm drizzle-kit generate --force 2>/dev/null || true
+RUN pnpm drizzle-kit push --force
 
-CMD ["sh", "-c", "pnpm drizzle-kit migrate && node build"]
+CMD ["node", "build"]
