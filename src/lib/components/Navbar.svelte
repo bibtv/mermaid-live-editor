@@ -85,9 +85,9 @@
     <MermaidIcon class="size-6" />
     <a href="/" class="whitespace-nowrap text-accent">
       {#if !mobileToggle}
-        Mermaid
+        Diagram
       {/if}
-      Live Editor
+      Tool
     </a>
   </div>
   <div
