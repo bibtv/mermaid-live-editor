@@ -16,11 +16,10 @@ export const load: PageServerLoad = async ({ request, url }) => {
       throw redirect(302, '/login');
     }
 
-    const diagram = db
+    const [diagram] = await db
       .select()
       .from(diagrams)
-      .where(and(eq(diagrams.id, parseInt(diagramId)), eq(diagrams.userId, user.id)))
-      .get();
+      .where(and(eq(diagrams.id, parseInt(diagramId)), eq(diagrams.userId, user.id)));
 
     if (!diagram) {
       throw redirect(302, '/diagrams');

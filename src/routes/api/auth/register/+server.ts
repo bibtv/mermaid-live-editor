@@ -17,14 +17,14 @@ export const POST: RequestHandler = async ({ request }) => {
       return json({ error: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
-    const existing = db.select().from(users).where(eq(users.email, email)).get();
+    const [existing] = await db.select().from(users).where(eq(users.email, email));
     if (existing) {
       return json({ error: 'Email already registered' }, { status: 400 });
     }
 
     const passwordHash = await hashPassword(password);
 
-    const result = db.insert(users).values({ email, passwordHash }).returning().get();
+    const [result] = await db.insert(users).values({ email, passwordHash }).returning();
 
     const token = createToken(result);
 

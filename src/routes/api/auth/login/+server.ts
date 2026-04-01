@@ -13,7 +13,7 @@ export const POST: RequestHandler = async ({ request }) => {
       return json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const user = db.select().from(users).where(eq(users.email, email)).get();
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     if (!user) {
       return json({ error: 'Invalid email or password' }, { status: 401 });
     }

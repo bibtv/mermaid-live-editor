@@ -12,11 +12,10 @@ export const GET: RequestHandler = async ({ request, params }) => {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const diagram = db
+    const [diagram] = await db
       .select()
       .from(diagrams)
-      .where(and(eq(diagrams.id, parseInt(params.id)), eq(diagrams.userId, user.id)))
-      .get();
+      .where(and(eq(diagrams.id, parseInt(params.id)), eq(diagrams.userId, user.id)));
 
     if (!diagram) {
       return json({ error: 'Diagram not found' }, { status: 404 });
@@ -38,12 +37,11 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 
     const { title, content } = await request.json();
 
-    const result = db
+    const [result] = await db
       .update(diagrams)
       .set({ title, content, updatedAt: new Date() })
       .where(and(eq(diagrams.id, parseInt(params.id)), eq(diagrams.userId, user.id)))
-      .returning()
-      .get();
+      .returning();
 
     if (!result) {
       return json({ error: 'Diagram not found' }, { status: 404 });
@@ -63,11 +61,10 @@ export const DELETE: RequestHandler = async ({ request, params }) => {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = db
+    const [result] = await db
       .delete(diagrams)
       .where(and(eq(diagrams.id, parseInt(params.id)), eq(diagrams.userId, user.id)))
-      .returning()
-      .get();
+      .returning();
 
     if (!result) {
       return json({ error: 'Diagram not found' }, { status: 404 });

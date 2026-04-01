@@ -12,7 +12,7 @@ export const GET: RequestHandler = async ({ request }) => {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userDiagrams = db.select().from(diagrams).where(eq(diagrams.userId, user.id)).all();
+    const userDiagrams = await db.select().from(diagrams).where(eq(diagrams.userId, user.id));
 
     return json(userDiagrams);
   } catch (error) {
@@ -34,15 +34,14 @@ export const POST: RequestHandler = async ({ request }) => {
       return json({ error: 'Title and content are required' }, { status: 400 });
     }
 
-    const result = db
+    const [result] = await db
       .insert(diagrams)
       .values({
         userId: user.id,
         title,
         content
       })
-      .returning()
-      .get();
+      .returning();
 
     return json(result, { status: 201 });
   } catch (error) {
