@@ -5,7 +5,7 @@ const MINIMAX_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_pro';
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const { prompt } = await request.json();
+    const { prompt, currentCode } = await request.json();
 
     if (!prompt) {
       return json({ error: 'Prompt is required' }, { status: 400 });
@@ -16,12 +16,19 @@ export const POST: RequestHandler = async ({ request }) => {
       return json({ error: 'MiniMax API key not configured' }, { status: 500 });
     }
 
-    const systemPrompt = `You are a Mermaid diagram expert. Convert the user's description into a valid Mermaid diagram code.
+    const systemPrompt = `You are a Mermaid diagram expert. The user wants to modify their existing Mermaid diagram based on their request.
+
+Current diagram code:
+\`\`\`mermaid
+${currentCode || 'graph TD\n    A[Start] --> B[End]'}
+\`\`\`
+
 Rules:
+- Modify ONLY the existing diagram code based on the user's request
+- Keep the same diagram type unless user asks to change it
 - Only output the raw Mermaid code, no markdown code blocks
-- Use standard Mermaid syntax for flowcharts, sequence diagrams, class diagrams, etc.
-- Make the diagram clear and well-structured
-- If the description is vague, create a reasonable interpretation`;
+- Make minimal changes to address the user's request
+- If the request is unclear, make reasonable modifications`;
 
     const response = await fetch(MINIMAX_API_URL, {
       method: 'POST',
