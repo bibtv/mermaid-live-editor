@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { PageData } from './$types';
   import Actions from '$/components/Actions.svelte';
   import Card from '$/components/Card/Card.svelte';
   import DiagramDocButton from '$/components/DiagramDocumentationButton.svelte';
@@ -25,9 +26,13 @@
   import { logEvent, logMermaidChartClick } from '$/util/stats';
   import { initHandler } from '$/util/util';
   import { onMount } from 'svelte';
+  import { authUser, fetchUser } from '$lib/stores/auth';
+  import { debounce } from 'lodash-es';
   import CodeIcon from '~icons/custom/code';
   import HistoryIcon from '~icons/material-symbols/history';
   import GearIcon from '~icons/material-symbols/settings-outline-rounded';
+
+  let { data }: { data: PageData } = $props();
 
   const panZoomState = new PanZoomState();
 
@@ -53,13 +58,53 @@
   let isMobile = $derived(width < 640);
   let isViewMode = $state(true);
   let showEditorChooser = $state(false);
+  let saveStatus = $state<'saved' | 'saving' | 'unsaved' | null>(null);
+  let diagramId = $state<number | null>(data.diagram?.id ?? null);
+
+  async function saveDiagram() {
+    if (!diagramId || !$authUser) return;
+
+    const state = $stateStore;
+    saveStatus = 'saving';
+    try {
+      await fetch(`/api/diagrams/${diagramId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.diagram?.title ?? 'Untitled',
+          content: state.code
+        })
+      });
+      saveStatus = 'saved';
+    } catch (err) {
+      console.error('Failed to save:', err);
+      saveStatus = 'unsaved';
+    }
+  }
+
+  const debouncedSave = debounce(saveDiagram, 2000);
+
+  $effect(() => {
+    if (data.diagram?.content) {
+      updateCodeStore({ code: data.diagram.content });
+    }
+  });
 
   onMount(async () => {
     showEditorChooser = shouldShowEditorChooser();
     await initHandler();
+    await fetchUser();
     window.addEventListener('appinstalled', () => {
       logEvent('pwaInstalled', { isMobile });
     });
+  });
+
+  $effect(() => {
+    const code = $stateStore.code;
+    if (diagramId && data.diagram?.content && code !== data.diagram.content) {
+      saveStatus = 'unsaved';
+      debouncedSave();
+    }
   });
 
   let isHistoryOpen = $state(false);
@@ -86,10 +131,26 @@
   {/snippet}
 
   <Navbar mobileToggle={isMobile ? mobileToggle : undefined}>
+    {#if diagramId}
+      <span class="mr-2 text-xs text-gray-500">
+        {#if saveStatus === 'saving'}
+          Saving...
+        {:else if saveStatus === 'saved'}
+          Saved
+        {:else if saveStatus === 'unsaved'}
+          Unsaved changes
+        {/if}
+      </span>
+    {/if}
     <Toggle bind:pressed={isHistoryOpen} size="sm">
       <HistoryIcon />
     </Toggle>
     <Share />
+    {#if $authUser && diagramId}
+      <Button variant="accent" size="sm" onclick={saveDiagram}>Save</Button>
+    {:else if $authUser}
+      <Button variant="accent" size="sm" href="/diagrams">My Diagrams</Button>
+    {/if}
     <McWrapper>
       <Button
         variant="accent"
