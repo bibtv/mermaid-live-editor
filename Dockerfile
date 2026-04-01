@@ -41,4 +41,9 @@ ENV NODE_ENV=production
 
 EXPOSE 8080
 
-CMD ["node", "build"]
+COPY --from=mermaid-live-editor-builder /app/node_modules /app/node_modules
+COPY --from=mermaid-live-editor-builder /app/build /app/build
+
+RUN pnpm drizzle-kit generate --force 2>/dev/null || true
+
+CMD ["sh", "-c", "pnpm drizzle-kit migrate && node build"]
