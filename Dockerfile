@@ -39,9 +39,15 @@ FROM mermaid-live-editor-builder AS mermaid-prod
 
 ENV NODE_ENV=production
 
-EXPOSE 8080
+WORKDIR /app
+
+COPY --from=mermaid-live-editor-builder /app/build ./build
+COPY --from=mermaid-live-editor-builder /app/node_modules ./node_modules
+COPY --from=mermaid-live-editor-builder /app/package.json ./package.json
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
+
+EXPOSE 8080
 
 CMD ["/start.sh"]
