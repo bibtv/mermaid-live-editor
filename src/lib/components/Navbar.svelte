@@ -13,6 +13,7 @@
   import { Separator } from '$/components/ui/separator';
   import { dismissPromotion, getActivePromotion } from '$lib/util/promos/promo';
   import { authUser, logout, fetchUser } from '$lib/stores/auth';
+  import Playground from '$/components/Playground.svelte';
   import type { ComponentProps, Snippet } from 'svelte';
   import MermaidIcon from '~icons/custom/mermaid';
   import CloseIcon from '~icons/material-symbols/close-rounded';
@@ -104,6 +105,8 @@
   <div
     id="menu"
     class="hidden flex-nowrap items-center justify-between gap-3 overflow-hidden md:flex">
+    <Playground />
+    <Separator orientation="vertical" />
     {#if $authUser}
       <a href="/diagrams" class="text-sm text-gray-600 hover:text-indigo-600">My Diagrams</a>
       <span class="text-sm text-gray-500">{$authUser.email}</span>
