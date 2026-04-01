@@ -41,9 +41,7 @@ ENV NODE_ENV=production
 
 EXPOSE 8080
 
-COPY --from=mermaid-live-editor-builder /app/node_modules /app/node_modules
-COPY --from=mermaid-live-editor-builder /app/build /app/build
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
-RUN pnpm drizzle-kit push --force
-
-CMD ["node", "build"]
+CMD ["/start.sh"]
