@@ -34,3 +34,11 @@ FROM nginx:1.28-alpine3.21 AS mermaid
 
 COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=mermaid-live-editor-builder /app/docs /usr/share/nginx/html
+
+FROM mermaid-live-editor-builder AS mermaid-prod
+
+ENV NODE_ENV=production
+
+EXPOSE 8080
+
+CMD ["node", "build"]
