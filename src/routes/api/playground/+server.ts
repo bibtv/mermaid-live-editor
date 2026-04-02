@@ -16,17 +16,11 @@ export const POST: RequestHandler = async ({ request }) => {
       return json({ error: 'MiniMax API key not configured' }, { status: 500 });
     }
 
-    const systemPrompt = `You are a Mermaid diagram expert. The user wants to modify their existing Mermaid diagram based on their request.
+    const userMessage = currentCode
+      ? `Modify this Mermaid diagram: ${currentCode}\n\nRequest: ${prompt}`
+      : `Create a Mermaid diagram: ${prompt}`;
 
-Current diagram code:
-${currentCode || 'graph TD\n    A[Start] --> B[End]'}
-
-Rules:
-- Modify ONLY the existing diagram code based on the user's request
-- Keep the same diagram type unless user asks to change it
-- Only output the raw Mermaid code, no markdown code blocks
-- Make minimal changes to address the user's request
-- If the request is unclear, make reasonable modifications`;
+    console.log('API Key prefix:', apiKey.substring(0, 10));
 
     const response = await fetch(MINIMAX_API_URL, {
       method: 'POST',
@@ -36,34 +30,28 @@ Rules:
       },
       body: JSON.stringify({
         model: 'MiniMax-Text-01',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
-        ],
+        messages: [{ role: 'user', content: userMessage }],
         temperature: 0.7
       })
     });
 
     const data = await response.json();
-    console.log('MiniMax response status:', response.status);
-    console.log('MiniMax response:', JSON.stringify(data, null, 2));
+    console.log('Response status:', response.status);
+    console.log('Response:', JSON.stringify(data, null, 2));
 
     if (!response.ok) {
-      console.error('MiniMax API error:', data);
       return json(
         { error: data.base_resp?.status_msg || 'AI service error' },
         { status: response.status }
       );
     }
 
-    let mermaidCode = data.choices?.[0]?.message?.content?.trim();
+    let mermaidCode =
+      data.choices?.[0]?.message?.content?.trim() ||
+      data.choices?.[0]?.text?.trim() ||
+      data.text?.trim();
 
     if (!mermaidCode) {
-      mermaidCode = data.choices?.[0]?.text?.trim();
-    }
-
-    if (!mermaidCode) {
-      console.error('No code found in response:', data);
       return json({ error: 'No response from AI' }, { status: 500 });
     }
 
