@@ -45,12 +45,13 @@ Rules:
     });
 
     const data = await response.json();
+    console.log('MiniMax response status:', response.status);
     console.log('MiniMax response:', JSON.stringify(data, null, 2));
 
     if (!response.ok) {
       console.error('MiniMax API error:', data);
       return json(
-        { error: data.error?.message || 'AI service error' },
+        { error: data.base_resp?.status_msg || 'AI service error' },
         { status: response.status }
       );
     }
