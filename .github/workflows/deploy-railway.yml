@@ -1,0 +1,63 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.10.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        env:
+          DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.RAILWAY_JWT_SECRET }}
+          MERMAID_RENDERER_URL: 'https://mermaid.ink'
+          MERMAID_KROKI_RENDERER_URL: 'https://kroki.io'
+          MERMAID_IS_ENABLED_MERMAID_CHART_LINKS: 'false'
+          MERMAID_HIDE_PRIVACY_POLICY: 'true'
+        run: pnpm build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: |
+            .svelte-kit/output/server/
+            .svelte-kit/output/client/
+            node_modules/
+            package.json
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+
+      - name: Deploy to Railway
+        uses: avaly/railway-deploy-action@v1
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: ${{ secrets.RAILWAY_SERVICE_NAME }}

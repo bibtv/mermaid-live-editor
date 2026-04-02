@@ -12,11 +12,14 @@
   import { Button } from '$/components/ui/button';
   import { Separator } from '$/components/ui/separator';
   import { dismissPromotion, getActivePromotion } from '$lib/util/promos/promo';
+  import { authUser, logout, fetchUser } from '$lib/stores/auth';
+  import Playground from '$/components/Playground.svelte';
   import type { ComponentProps, Snippet } from 'svelte';
   import MermaidIcon from '~icons/custom/mermaid';
   import CloseIcon from '~icons/material-symbols/close-rounded';
   import GithubIcon from '~icons/mdi/github';
   import DropdownNavMenu from './DropdownNavMenu.svelte';
+  import { onMount } from 'svelte';
 
   interface Props {
     mobileToggle?: Snippet;
@@ -42,6 +45,10 @@
 
   let activePromotion = $state(hidePromotion ? undefined : getActivePromotion());
 
+  onMount(() => {
+    fetchUser();
+  });
+
   const trackBannerClick = () => {
     if (!activePromotion) {
       return;
@@ -51,6 +58,11 @@
     });
     logMermaidChartClick('banner');
   };
+
+  async function handleLogout() {
+    await logout();
+    window.location.href = '/';
+  }
 </script>
 
 {#if activePromotion}
@@ -85,14 +97,25 @@
     <MermaidIcon class="size-6" />
     <a href="/" class="whitespace-nowrap text-accent">
       {#if !mobileToggle}
-        Mermaid
+        Diagram
       {/if}
-      Live Editor
+      Tool
     </a>
   </div>
   <div
     id="menu"
     class="hidden flex-nowrap items-center justify-between gap-3 overflow-hidden md:flex">
+    <Playground />
+    <Separator orientation="vertical" />
+    {#if $authUser}
+      <a href="/diagrams" class="text-sm text-gray-600 hover:text-indigo-600">My Diagrams</a>
+      <span class="text-sm text-gray-500">{$authUser.email}</span>
+      <Button variant="ghost" size="sm" onclick={handleLogout}>Logout</Button>
+    {:else}
+      <a href="/login" class="text-sm text-gray-600 hover:text-indigo-600">Login</a>
+      <a href="/register" class="text-sm text-gray-600 hover:text-indigo-600">Register</a>
+    {/if}
+    <Separator orientation="vertical" />
     <DropdownNavMenu icon={GithubIcon} links={githubLinks} />
     <Separator orientation="vertical" />
     {@render children()}
