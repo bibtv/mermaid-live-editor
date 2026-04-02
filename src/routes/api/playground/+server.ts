@@ -29,7 +29,7 @@ export const POST: RequestHandler = async ({ request }) => {
         Authorization: `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'MiniMax-Text-01',
+        model: 'MiniMax-M2.7',
         messages: [{ role: 'user', content: userMessage }],
         temperature: 0.7
       })
