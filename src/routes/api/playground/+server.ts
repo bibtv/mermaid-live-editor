@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 
-const MINIMAX_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_pro';
+const API_URL = 'https://api.minimax.io/v1/chat/completions';
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
@@ -13,7 +13,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     const apiKey = process.env.MINIMAX_API_KEY;
     if (!apiKey) {
-      return json({ error: 'MiniMax API key not configured' }, { status: 500 });
+      return json({ error: 'AI API key not configured' }, { status: 500 });
     }
 
     const userMessage = currentCode
@@ -22,7 +22,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     console.log('API Key prefix:', apiKey.substring(0, 10));
 
-    const response = await fetch(MINIMAX_API_URL, {
+    const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -41,15 +41,12 @@ export const POST: RequestHandler = async ({ request }) => {
 
     if (!response.ok) {
       return json(
-        { error: data.base_resp?.status_msg || 'AI service error' },
+        { error: data.error?.message || data.base_resp?.status_msg || 'AI service error' },
         { status: response.status }
       );
     }
 
-    let mermaidCode =
-      data.choices?.[0]?.message?.content?.trim() ||
-      data.choices?.[0]?.text?.trim() ||
-      data.text?.trim();
+    let mermaidCode = data.choices?.[0]?.message?.content?.trim();
 
     if (!mermaidCode) {
       return json({ error: 'No response from AI' }, { status: 500 });
