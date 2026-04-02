@@ -19,9 +19,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const systemPrompt = `You are a Mermaid diagram expert. The user wants to modify their existing Mermaid diagram based on their request.
 
 Current diagram code:
-\`\`\`mermaid
 ${currentCode || 'graph TD\n    A[Start] --> B[End]'}
-\`\`\`
 
 Rules:
 - Modify ONLY the existing diagram code based on the user's request
@@ -46,18 +44,32 @@ Rules:
       })
     });
 
+    const data = await response.json();
+    console.log('MiniMax response:', JSON.stringify(data, null, 2));
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('MiniMax API error:', errorText);
-      return json({ error: 'AI service error' }, { status: response.status });
+      console.error('MiniMax API error:', data);
+      return json(
+        { error: data.error?.message || 'AI service error' },
+        { status: response.status }
+      );
     }
 
-    const data = await response.json();
-    const mermaidCode = data.choices?.[0]?.message?.content?.trim();
+    let mermaidCode = data.choices?.[0]?.message?.content?.trim();
 
     if (!mermaidCode) {
+      mermaidCode = data.choices?.[0]?.text?.trim();
+    }
+
+    if (!mermaidCode) {
+      console.error('No code found in response:', data);
       return json({ error: 'No response from AI' }, { status: 500 });
     }
+
+    mermaidCode = mermaidCode
+      .replace(/^```mermaid\s*/i, '')
+      .replace(/```$/i, '')
+      .trim();
 
     return json({ code: mermaidCode });
   } catch (error) {
